@@ -13,6 +13,7 @@ import { HeroList } from '@/lib/heroes'
 
 
 export default function BuildUi() {
+
   const [heroImage, setHeroImage] = useState<string | null>(null)
   const [selectedItems, setSelectedItems] = useState<Item[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -20,13 +21,35 @@ export default function BuildUi() {
   const [selectedHero, setSelectedHero] = useState<keyof typeof HeroList>('pocket')
 
 
+const openItemSelection = (slotIndex: number) => {
+  setSelectedSlot(slotIndex)
+  setIsDialogOpen(true)
+}
 
- 
-  const toggleHero = () => {
-    setSelectedHero((prevHero) => (prevHero === 'pocket' ? 'paradox' : 'pocket'))
+const addItemToSlot = (item: Item) => {
+  if (selectedSlot !== null) {
+    const newItems = [...selectedItems]
+    newItems[selectedSlot] = item
+    setSelectedItems(newItems)
+    setIsDialogOpen(false)
   }
+}
+const calculateOffensiveStats = () => {
+  const bullet = selectedItems.reduce((sum, item) => item?.stat === 'Bullet' ? sum + item.value : sum, 0)
+  const spirit = selectedItems.reduce((sum, item) => item?.stat === 'Spirit' ? sum + item.value : sum, 0)
+  return { bullet, spirit }
+}
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+const { bullet, spirit } = calculateOffensiveStats()
+
+
+const toggleHero = () => {
+  setSelectedHero((prevHero) => (prevHero === 'pocket' ? 'paradox' : 'pocket'))
+}
+ 
+
+
+const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
       const reader = new FileReader()
@@ -37,27 +60,6 @@ export default function BuildUi() {
     }
   }
 
-  const openItemSelection = (slotIndex: number) => {
-    setSelectedSlot(slotIndex)
-    setIsDialogOpen(true)
-  }
-
-  const addItemToSlot = (item: Item) => {
-    if (selectedSlot !== null) {
-      const newItems = [...selectedItems]
-      newItems[selectedSlot] = item
-      setSelectedItems(newItems)
-      setIsDialogOpen(false)
-    }
-  }
-
-  const calculateOffensiveStats = () => {
-    const attack = selectedItems.reduce((sum, item) => item?.stat === 'Attack' ? sum + item.value : sum, 0)
-    const magic = selectedItems.reduce((sum, item) => item?.stat === 'Magic' ? sum + item.value : sum, 0)
-    return { attack, magic }
-  }
-
-  const { attack, magic } = calculateOffensiveStats()
 
   return (
       <div className="bg-black-500 text-gray-300 p-10 min-h-screen w-full">
@@ -82,17 +84,13 @@ export default function BuildUi() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div className="pt-2">
               <h2 className="text-lg font-semibold mb-2">Offensive</h2>
-              <div className="flex items-center mb-2">
-                <span className="w-24">Bullet:</span>
-                <div className="h-4 w-full bg-gray-700 rounded">
-                  <div className="h-full bg-red-500 rounded" style={{ width: `${attack}%` }}></div>
-                </div>
+              <div className="flex items-center mb-2 gap-4">
+                <span className="w-12">Bullet:</span>
+                  <div className="h-full bg-orange-500 rounded" style={{ width: `${bullet/1.75 + 5}%` }}><p className="text-left pl-2 text-white text-xs">{bullet}</p></div>
               </div>
-              <div className="flex items-center mb-2">
-                <span className="w-24">Spirit:</span>
-                <div className="h-4 w-full bg-gray-700 rounded">
-                  <div className="h-full bg-blue-500 rounded" style={{ width: `${magic}%` }}></div>
-                </div>
+              <div className="flex items-center mb-2 gap-4">
+                <span className="w-12">Spirit:</span>
+                  <div className="h-full bg-purple-500 rounded" style={{ width: `${spirit/1.75 + 5}%` }}><p className="text-center text-white text-xs">{spirit}</p></div>
               </div>
             </div>
             <div>
@@ -105,7 +103,7 @@ export default function BuildUi() {
               ))}
             </div>
             <div>
-              <h2 className="text-lg font-semibold mb-2">Utility</h2>
+              <h2 className="text-lg font-semibold mb-2">Misc.</h2>
               {[...Array(3)].map((_, i) => (
                   <div key={i} className="flex items-center mb-2">
                     <Skeleton className="h-4 w-4 mr-2" />
