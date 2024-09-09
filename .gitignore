@@ -37,6 +37,6 @@ next-env.d.ts
 
 # dev
 .eslintrc.json
-next.config.mjs
-postcss.config.mjs
+*.mjs
+
 
