@@ -5,11 +5,11 @@ export type Item = {
     value: number;
   };
 
+
 export type Hero = {
+    id: number;
     name: string;
     image: string;
   };
 
-export type Heroes = {
-    [key: string]: Hero;
-  };
+

@@ -1,12 +1,14 @@
-import { Hero, Heroes } from "./types"
+import { Hero } from "./types"
 
-export const HeroList: Heroes = {
-    pocket: {
+export const HeroList: Hero[] = [
+    {
+      id: 1,
       name: "Pocket",
       image: "/pocket.jpg",
     },
-    paradox: {
+    {
+      id: 2,
       name: "Paradox",
       image: "/paradox.jpg",
     },
-  };
+  ];
