@@ -8,22 +8,33 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 // import { Label } from "@/components/ui/label"
 import Image from 'next/image'
 // import { Hero, Item } from '@/lib/types'
-import { ItemsList } from '@/lib/items'
-// import { HeroList } from '@/lib/heroes'
+import { Card, CardContent } from "@/components/ui/card"
+// import { ItemsList } from '@/lib/items'
+import { HeroList } from '@/lib/heroes'
 import { BuildUIutils } from '@/lib/BuildUIutils'
 
 
 export default function BuildUi() {
 
+
+
   const {
     selectedItems,
     isDialogOpen,
     selectedHero,
-    openItemSelection,
-    addItemToSlot,
-    toggleHero,
+    isHeroDialogOpen,
+    setIsHeroDialogOpen,
+    setSelectedHero,
+    setSelectedItems,
     setIsDialogOpen,
-    stats,
+    handleOpenItemSelection,
+    addItemToSlot,
+    heroStats,
+    filteredItems,
+    filterType,
+    setFilterType,
+    filterTier,
+    setFilterTier,
   } = BuildUIutils()
 
   return (
@@ -31,11 +42,11 @@ export default function BuildUi() {
         <div className="w-full mx-auto p-4">
           <div className="flex justify-between items-start">
             <div className="flex items-center space-x-4">
-              <div className="relative w-16 h-16 cursor-pointer hover:scale-110" onClick={toggleHero}>
-                    <Image src={selectedHero.image} alt="Profile" width={64} height={60} className="rounded-full object-cover" />
+              <div className="relative w-16 h-16 cursor-pointer hover:scale-110" onClick={() => setIsHeroDialogOpen(true)}>
+                    <Image src={HeroList[selectedHero].image} alt="Profile" width={64} height={60} className="rounded-full object-cover" />
               </div>
               <div>
-                {selectedHero ? <p>{selectedHero.name}</p> : <Skeleton className="h-6 w-32 mb-2" /> }
+                {selectedHero ? <p>{HeroList[selectedHero].name}</p> : <Skeleton className="h-6 w-32 mb-2" /> }
                 <Skeleton className="h-4 w-48" />
               </div>
             </div>
@@ -46,19 +57,23 @@ export default function BuildUi() {
           <div className="bg-gray-200 rounded-sm">  
           <div className="grid grid-cols-1 md:grid-cols-[2fr,3fr,3fr] gap-4 m-4 pt-4">
             <div>
-              <h2 className="text-lg font-semibold mb-2">Offensive</h2>
+              <h2 className="text-lg font-semibold mb-2">Main Stats</h2>
               <div className="flex items-center mb-2 gap-4">
                 <span className="w-12">Bullet:</span>
-                  <div className="h-full bg-orange-500 rounded" style={{ width: `${stats.bullet/1.75 + 5}%` }}><p className="text-center text-white text-xs">{stats.bullet}</p></div>
+                  <div className="h-full bg-orange-500 rounded" style={{ width: `${heroStats.bulletPower + 5}%` }}><p className="text-center text-white text-xs">{heroStats.bulletPower * 100}</p></div>
               </div>
               <div className="flex items-center mb-2 gap-4">
                 <span className="w-12">Spirit:</span>
-                  <div className="h-full bg-purple-500 rounded" style={{ width: `${stats.spirit/1.75 + 5}%` }}><p className="text-center text-white text-xs">{stats.spirit}</p></div>
+                  <div className="h-full bg-purple-500 rounded" style={{ width: `${heroStats.spiritPower/1.75 + 5}%` }}><p className="text-center text-white text-xs">{heroStats.spiritPower}</p></div>
+              </div>
+              <div className="flex items-center mb-2 gap-4">
+                <span className="w-12">Health:</span>
+                  <div className="h-full bg-green-500 rounded" style={{ width: `${heroStats.vitality * 100 + 5}%` }}><p className="text-center text-white text-xs">{heroStats.vitality * 100 | 0}</p></div>
               </div>
             </div>
             <div>
-              <h2 className="text-lg font-semibold mb-2">Defensive</h2>
-              {[...Array(4)].map((_, i) => (
+              <h2 className="text-lg font-semibold mb-2">Damage</h2>
+              {[...Array(5)].map((_, i) => (
                   <div key={i} className="flex items-center mb-2">
                     <Skeleton className="h-4 w-4 mr-2" />
                     <Skeleton className="h-4 w-full" />
@@ -66,8 +81,8 @@ export default function BuildUi() {
               ))}
             </div>
             <div>
-              <h2 className="text-lg font-semibold mb-2">Misc.</h2>
-              {[...Array(3)].map((_, i) => (
+              <h2 className="text-lg font-semibold mb-2">Vitality</h2>
+              {[...Array(5)].map((_, i) => (
                   <div key={i} className="flex items-center mb-2">
                     <Skeleton className="h-4 w-4 mr-2" />
                     <Skeleton className="h-4 w-full" />
@@ -86,7 +101,7 @@ export default function BuildUi() {
                       <div
                         key={i}
                         className={`bg-${color}-500 rounded-md p-2 aspect-square relative group cursor-pointer hover:scale-105`}
-                        onClick={() => openItemSelection(itemIndex)}>
+                        onClick={() => handleOpenItemSelection(itemIndex, color)}>
                         <div className="transition-all duration-300 group-hover:scale-105">
                           <div className={`h-2 w-full mb-1 bg-${color}-500`} />
                           <div className={`h-1 w-3/4 bg-${color}-500`} />
@@ -105,20 +120,58 @@ export default function BuildUi() {
           </div>
         </div>
 
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Select an Item</DialogTitle>
-            </DialogHeader>
-            <div className="grid grid-cols-2 gap-4">
-              {ItemsList.map((item) => (
-                  <Button key={item.id} onClick={() => addItemToSlot(item)} variant="outline">
-                    {item.name}
-                  </Button>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Select an Item</DialogTitle>
+          </DialogHeader>
+          {filterType === 'gray' && filterTier == null ? (
+            <div className="flex flex-col space-y-2">
+              {['T1', 'T2', 'T3', 'T4'].map(tier => (
+                <Button key={tier} onClick={() => setFilterTier(tier)} variant="outline">
+                  {tier}
+                </Button>
               ))}
             </div>
-          </DialogContent>
-        </Dialog>
+          ) : filterType === 'gray' ? (
+            <div className="flex flex-col space-y-2">
+              {['orange', 'green', 'purple'].map(type => (
+                <Button key={type} onClick={() => setFilterType(type)} variant="outline">{type}</Button>
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-4">
+              {filteredItems.map((item) => (
+                <Button key={item.id} onClick={() => addItemToSlot(item)} variant="outline">
+                  {item.name}
+                </Button>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+        <Dialog open={isHeroDialogOpen} onOpenChange={setIsHeroDialogOpen}>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Select a Hero</DialogTitle>
+    </DialogHeader>
+    <div className="grid grid-cols-2 gap-4">
+      {Object.entries(HeroList).map(([id, hero]) => (
+        <Card key={id} className="cursor-pointer" onClick={() => {
+          setSelectedHero(Number(id));
+          setSelectedItems([]);
+          setIsHeroDialogOpen(false);
+        }}>
+          <CardContent className="flex flex-col items-center p-4">
+            <Image src={hero.image} alt={hero.name} width={64} height={64} className="rounded-full mb-2" />
+            <p>{hero.name}</p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  </DialogContent>
+</Dialog>
       </div>
   )
 }
