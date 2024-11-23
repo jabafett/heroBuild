@@ -1,4 +1,5 @@
-# heroBuild
+# [heroBuild](https://jabafetts-dns.xyz/)
+
 <p>Just a learning project for me to learn react/next as well as typescript, 
 Frameworks of a hero item builder that would allow you quickly compare the 
 pros and cons of different items quicker than you can in game.
